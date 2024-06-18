@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 1em;
+        }
+        #chat-window {
+            max-width: 600px;
+            margin: 2em auto;
+            padding: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+        }
+        #messages {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 1em;
+            padding: 0.5em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #f9f9f9;
+            padding: 0.5em;
+            margin-bottom: 0.5em;
+            border-radius: 5px;
+        }
+        .bot-response {
+            background-color: #e7f3ff;
+            padding: 0.5em;
+            margin-bottom: 0.5em;
+            border-radius: 5px;
+        }
+        #user-input {
+            width: calc(100% - 70px);
+            padding: 0.5em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-right: 5px;
+        }
+        #send-btn {
+            padding: 0.5em 1em;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #send-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>ChatBot</h1>
+    <div id="chat-window">
+        <div id="messages"></div>
+        <input type="text" id="user-input" placeholder="Type your message...">
+        <button id="send-btn">Send</button>
+    </div>
+    <script>
+        $(document).ready(function(){
+            $('#send-btn').click(function(){
+                let userMessage = $('#user-input').val();
+                if(userMessage.trim() !== ''){
+                    $('#messages').append('<div class="user-message">' + userMessage + '</div>');
+                    $('#user-input').val('');
+                    $.ajax({
+                        type: 'POST',
+                        url: '{{ url_for("chat_response") }}',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ message: userMessage }),
+                        success: function(response){
+                            $('#messages').append('<div class="bot-response">' + response.response + '</div>');
+                            $('#messages').scrollTop($('#messages')[0].scrollHeight);
+                        }
+                    });
+                }
+            });
+            $('#user-input').on('keypress', function(e) {
+                if(e.which === 13) {
+                    $('#send-btn').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+{% endblock %}
