@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Form</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Edit Form: {{ form.title }}</h1>
+    <form id="edit-form" method="POST">
+        <div>
+            <label for="title">Form Title</label>
+            <input type="text" id="title" name="title" value="{{ form.title }}" required>
+        </div>
+        <div>
+            <label for="description">Form Description</label>
+            <textarea id="description" name="description" required>{{ form.description }}</textarea>
+        </div>
+        <div id="questions-container">
+            {% for question in form.questions %}
+                <div class="question">
+                    <label for="question-{{ loop.index }}">Question {{ loop.index }}</label>
+                    <input type="text" id="question-{{ loop.index }}" name="questions[{{ loop.index }}][question]" value="{{ question.question }}" required>
+                    <select name="questions[{{ loop.index }}][type]" required>
+                        <option value="text" {% if question.type == 'text' %}selected{% endif %}>Text</option>
+                        <option value="textarea" {% if question.type == 'textarea' %}selected{% endif %}>Textarea</option>
+                        <option value="radio" {% if question.type == 'radio' %}selected{% endif %}>Radio</option>
+                        <option value="checkbox" {% if question.type == 'checkbox' %}selected{% endif %}>Checkbox</option>
+                    </select>
+                    <input type="text" name="questions[{{ loop.index }}][options]" value="{{ question.options }}" placeholder="Options (comma-separated)">
+                    <button type="button" class="remove-question">Remove</button>
+                </div>
+            {% endfor %}
+        </div>
+        <button type="button" id="add-question">Add Question</button>
+        <button type="submit">Save Changes</button>
+    </form>
+    <script>
+    document.getElementById('edit-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const questions = [];
+
+    document.querySelectorAll('#questions-container > div').forEach(questionDiv => {
+        const question = {
+            question: questionDiv.querySelector('input[name="questions[][question]"]').value,
+            type: questionDiv.querySelector('select[name="questions[][type]"]').value,
+            options: questionDiv.querySelector('input[name="questions[][options]"]').value.split(',')
+        };
+        questions.push(question);
+    });
+
+    fetch(`{{ url_for('edit_form', form_id=form_id) }}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            title: formData.get('title'),
+            description: formData.get('description'),
+            questions: questions
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert('Form updated successfully!');
+        window.location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating the form.');
+    });
+});
+
+    </script>
+</body>
+</html>

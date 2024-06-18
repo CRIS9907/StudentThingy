@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ form.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Additional styles for form */
+        .error-message {
+            color: red;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ form.title }}</h1>
+    <p>{{ form.description }}</p>
+    <form id="submit-form" method="POST">
+        {% for question in form.questions %}
+            <div>
+                <label for="question-{{ loop.index }}">{{ question.question }}</label>
+                {% if question.type == 'text' %}
+                    <input type="text" id="question-{{ loop.index }}" name="answers[{{ question.question }}]" required>
+                {% elif question.type == 'textarea' %}
+                    <textarea id="question-{{ loop.index }}" name="answers[{{ question.question }}]" required></textarea>
+                {% elif question.type == 'radio' %}
+                    {% for option in question.options.split(',') %}
+                        <input type="radio" id="option-{{ loop.index }}-{{ loop.index0 }}" name="answers[{{ question.question }}]" value="{{ option }}" required>
+                        <label for="option-{{ loop.index }}-{{ loop.index0 }}">{{ option }}</label>
+                    {% endfor %}
+                {% elif question.type == 'checkbox' %}
+                    {% for option in question.options.split(',') %}
+                        <input type="checkbox" id="option-{{ loop.index }}-{{ loop.index0 }}" name="answers[{{ question.question }}][]" value="{{ option }}">
+                        <label for="option-{{ loop.index }}-{{ loop.index0 }}">{{ option }}</label>
+                    {% endfor %}
+                {% endif %}
+                <span class="error-message" id="error-{{ loop.index }}" style="display: none;"></span>
+            </div>
+        {% endfor %}
+        <button type="submit">Submit</button>
+    </form>
+    <div id="confirmation-message" style="display: none;">
+        <p>Form submitted successfully!</p>
+    </div>
+    <script>
+        document.getElementById('submit-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const answers = {};
+            let isValid = true;
+            formData.forEach((value, key) => {
+                if (key.endsWith('[]')) {
+                    key = key.slice(0, -2);
+                    if (!answers[key]) answers[key] = [];
+                    answers[key].push(value);
+                } else {
+                    answers[key] = value;
+                }
+            });
+            // Client-side validation
+            {% for question in form.questions %}
+                const question{{ loop.index }} = document.getElementById('question-{{ loop.index }}');
+                const error{{ loop.index }} = document.getElementById('error-{{ loop.index }}');
+                error{{ loop.index }}.style.display = 'none';
+                if (question{{ loop.index }}.hasAttribute('required') && !question{{ loop.index }}.value.trim()) {
+                    error{{ loop.index }}.innerText = 'This field is required.';
+                    error{{ loop.index }}.style.display = 'block';
+                    isValid = false;
+                }
+            {% endfor %}
+            if (isValid) {
+                fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ answers: answers })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('submit-form').style.display = 'none';
+                    document.getElementById('confirmation-message').style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while submitting the form.');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

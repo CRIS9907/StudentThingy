@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create Form</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+        nav {
+            background-color: #333;
+            color: white;
+            padding: 1em;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 10px;
+        }
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 1em;
+        }
+        form {
+            max-width: 600px;
+            margin: 2em auto;
+            padding: 1em;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5em;
+        }
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.5em;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 0.5em;
+        }
+        button {
+            padding: 0.5em 1em;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </nav>
+    <h1>Create Form</h1>
+    <form id="create-form" method="POST">
+        <div>
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <div>
+            <label for="description">Description</label>
+            <textarea id="description" name="description"></textarea>
+        </div>
+        <div id="questions-container">
+            <h3>Questions</h3>
+            <button type="button" id="add-question">Add Question</button>
+        </div>
+        <button type="submit">Create Form</button>
+    </form>
+    <script>
+        document.getElementById('create-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const formData = new FormData(event.target);
+    const questions = [];
+
+    document.querySelectorAll('#questions-container > div').forEach(questionDiv => {
+        const question = {
+            question: questionDiv.querySelector('input[name="question"]').value,
+            type: questionDiv.querySelector('select[name="type"]').value,
+            options: questionDiv.querySelector('input[name="options"]').value.split(',')
+        };
+        questions.push(question);
+    });
+
+    fetch('{{ url_for("create_form") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            title: formData.get('title'),
+            description: formData.get('description'),
+            questions: questions
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert('Form created successfully!');
+        window.location.href = `{{ url_for('view_form', slug='') }}${data.slug}`;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while creating the form.');
+    });
+});
+
+document.getElementById('add-question').addEventListener('click', function() {
+    const questionContainer = document.createElement('div');
+    questionContainer.innerHTML = `
+        <div>
+            <label for="question">Question</label>
+            <input type="text" name="question" required>
+        </div>
+        <div>
+            <label for="type">Type</label>
+            <select name="type" required>
+                <option value="text">Text</option>
+                <option value="textarea">Textarea</option>
+                <option value="radio">Radio</option>
+                <option value="checkbox">Checkbox</option>
+            </select>
+        </div>
+        <div>
+            <label for="options">Options (comma separated)</label>
+            <input type="text" name="options">
+        </div>
+        <button type="button" class="remove-question">Remove</button>
+    `;
+    document.getElementById('questions-container').appendChild(questionContainer);
+});
+
+document.addEventListener('click', function(event) {
+    if (event.target.classList.contains('remove-question')) {
+        event.target.parentElement.remove();
+    }
+});
+
+    </script>
+</body>
+</html>
