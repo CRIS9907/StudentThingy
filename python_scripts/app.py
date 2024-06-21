@@ -17,7 +17,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 # Initialize the Cohere API client and load the PDF chunks
-cohere_client = initialize_cohere('q7YnpZWRHUgFjWO7c6lPftQRbi8GNB9pSIFHTtmB')  # Replace with your actual Cohere API key
+
 pdf_text = extract_text_from_pdf(r'C:\student_Thingy\student_Thingy\studentHandbook.pdf')
 pdf_chunks = split_text_into_chunks(pdf_text)
 
